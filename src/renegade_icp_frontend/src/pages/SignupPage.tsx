@@ -9,127 +9,64 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserPlus, AlertCircle } from "lucide-react";
+import { AuthClient } from "@dfinity/auth-client";
+
 
 const SignupPage: React.FC = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  const handleInternetIdentityLogin = async () => {
+    const authClient = await AuthClient.create();
 
-    // Validation
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (!acceptTerms) {
-      setError("You must accept the terms and conditions");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // This would be an actual API call in a real app
-      // Mock successful registration
-      toast({
-        title: "Account created successfully",
-        description: "Please check your email to verify your account",
-      });
-      
-      navigate("/login");
-    } catch (err) {
-      setError("Failed to create account. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await authClient.login({
+      identityProvider: "https://identity.ic0.app", // II URL
+      onSuccess: () => {
+        console.log("Logged in with Internet Identity");
+        // You can now get the identity and pass it to your agent
+        const identity = authClient.getIdentity();
+        // Navigate to dashboard or wherever
+        navigate("/dashboard");
+      },
+    });
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] px-4 py-12">
-      <div className="w-full max-w-md">
-        <Card className="cyber-card">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>
-            <CardDescription className="text-center">
-              Sign up to get started with RENEGADE
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  className="bg-renegade-dark border-renegade-green/30 focus:border-renegade-green focus:ring-renegade-green/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="bg-renegade-dark border-renegade-green/30 focus:border-renegade-green focus:ring-renegade-green/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="bg-renegade-dark border-renegade-green/30 focus:border-renegade-green focus:ring-renegade-green/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="bg-renegade-dark border-renegade-green/30 focus:border-renegade-green focus:ring-renegade-green/20"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={acceptTerms}
-                  onCheckedChange={() => setAcceptTerms(!acceptTerms)}
-                  className="border-renegade-green/50 data-[state=checked]:bg-renegade-green data-[state=checked]:border-renegade-green"
-                />
-                <label
+    <div className="relative min-h-screen">
+      {/* Background image layer */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1639322537228-f710d846310a')] bg-cover bg-center opacity-10"></div>
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background"></div>
+
+      {/* Main content */}
+      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-8rem)] px-4 py-12">
+        <div className="w-full max-w-md">
+          <Card className="cyber-card">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
+              <CardDescription className="text-center">
+                Use Internet Identity to access your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center space-y-4">
+              <Button
+                onClick={handleInternetIdentityLogin}
+                className="w-full bg-renegade-green hover:bg-renegade-green/80 text-black"
+              >
+                Sign in with Internet Identity
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+
+  );
+};
+
+export default SignupPage;
+/**
+ * <label
                   htmlFor="terms"
                   className="text-sm font-medium leading-none cursor-pointer"
                 >
@@ -139,47 +76,6 @@ const SignupPage: React.FC = () => {
                   </Link>
                 </label>
               </div>
-              <Button
-                type="submit"
-                className="w-full bg-renegade-green hover:bg-renegade-green/80 text-black"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center">
-                    <span className="animate-pulse">Creating Account...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <UserPlus className="mr-2 h-4 w-4" /> Sign Up
-                  </div>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm">
-              Already have an account?{" "}
-              <Link to="/login" className="text-renegade-green hover:underline">
-                Sign in
-              </Link>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-renegade-green/30" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="w-full">Google</Button>
-              <Button variant="outline" className="w-full">GitHub</Button>
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
-  );
-};
-
-export default SignupPage;
+ * 
+ * 
+ */

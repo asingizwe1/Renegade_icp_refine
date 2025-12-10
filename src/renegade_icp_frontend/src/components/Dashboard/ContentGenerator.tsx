@@ -11,8 +11,22 @@ import { useToast } from "@/components/ui/use-toast";
 import { AuthClient } from "@dfinity/auth-client";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory as content_idl } from "../../../../declarations/content_canister";
-import { canisterId as content_canister_id } from "../../../../declarations/content_canister";
+import { Principal } from "@dfinity/principal";
 
+//--  const content_canister_id = import.meta.env.VITE_CANISTER_ID_CONTENT_CANISTER!;
+//If the variable isn’t loaded, that ! forces it to crash.
+// ✅ Replace the hardcoded canisterId import with environment variables
+const contentCanisterEnv = import.meta.env.VITE_CANISTER_ID_CONTENT_CANISTER;
+if (!contentCanisterEnv) {
+  throw new Error("Missing VITE_CANISTER_ID_CONTENT_CANISTER in .env");
+}
+const content_canister_id = Principal.fromText(contentCanisterEnv);
+const backend_canister_id = Principal.fromText(
+  import.meta.env.VITE_CANISTER_ID_RENEGADE_ICP_BACKEND || ""
+);
+const frontend_canister_id = Principal.fromText(
+  import.meta.env.VITE_CANISTER_ID_RENEGADE_ICP_FRONTEND || ""
+);
 
 const platforms = [
   { value: "twitter", label: "X / Twitter" },
@@ -41,22 +55,22 @@ const ContentGenerator: React.FC = () => {
 
   // helper: create an authenticated actor
   async function getBackendActor() {
-    const authClient = await AuthClient.create();
-    const isAuth = await authClient.isAuthenticated();
-    if (!isAuth) {
-      await authClient.login({ onSuccess: () => window.location.reload() });
-      return null;
+    let agent;
+    if (import.meta.env.VITE_DFX_NETWORK === "local") {
+      agent = new HttpAgent({ host: "http://127.0.0.1:4943" });
+      await agent.fetchRootKey();
+    } else {
+      const authClient = await AuthClient.create();
+      const identity = authClient.getIdentity();
+      agent = new HttpAgent({ identity });
     }
-    const identity = authClient.getIdentity();
-    const agent = new HttpAgent({ identity });
-    // for local dev only:
-    try { await agent.fetchRootKey(); } catch { }
-    const backend = Actor.createActor(content_idl, {
+
+    return Actor.createActor(content_idl, {
       agent,
       canisterId: content_canister_id,
     });
-    return backend;
   }
+
 
   // Called when user clicks Generate Content
   const handleGenerate = async () => {
