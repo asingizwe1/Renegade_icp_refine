@@ -1,3 +1,5 @@
+//Motoko doesn’t support outbound HTTP
+
 import Time "mo:base/Time";
 import Debug "mo:base/Debug";
 import Array "mo:base/Array";
@@ -93,6 +95,11 @@ actor class ContentCanister() {
     return ();
   };
 
+//User prompt → ContentCanister → AI model (Gemma) → Shield Gemma safety check → 
+   //if safe → return to frontend
+   //if unsafe → block or regenerate
+
+//UPDATED BACKEND
 // Generate content using an external AI (stub for now)
 public shared(msg) func generate_content(id: Int): async ?Text {
   // find the draft
