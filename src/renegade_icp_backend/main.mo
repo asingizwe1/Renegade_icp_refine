@@ -93,6 +93,39 @@ actor class ContentCanister() {
     return ();
   };
 
+// Generate content using an external AI (stub for now)
+public shared(msg) func generate_content(id: Int): async ?Text {
+  // find the draft
+  var draftOpt = await get_post(id);
+  switch (draftOpt) {
+    case null { return null };
+    case (?draft) {
+      // Here you would call out to your AI service (Gemma, OpenAI, etc.)
+      // For now, simulate generation
+      let raw = "Generated content for prompt: " # draft.prompt;
+
+      // Apply a simple "output filter" (stub)
+      let filtered = if (draft.tone == "professional") {
+        "Professional: " # raw
+      } else {
+        raw
+      };
+
+      // Update metadata
+      await save_generated(
+        draft.id,
+        "pointer://mock",   // replace with IPFS/S3 pointer
+        "hash123",          // replace with real hash
+        "gemma",            // model name
+        "{ \"tone\": \"" # draft.tone # "\" }"
+      );
+
+      return ?filtered;
+    };
+  };
+};
+
+
   // Get a post by id (linear scan using iterator over posts)
   public query func get_post(id: Int): async ?Post {
     for (pp in posts.vals()) {
