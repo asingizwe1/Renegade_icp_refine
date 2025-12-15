@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Copy, Save, Share, Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
 import { AuthClient } from "@dfinity/auth-client";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory as content_idl } from "../../../../declarations/content_canister";
@@ -81,34 +81,29 @@ const ContentGenerator: React.FC = () => {
 
     setIsGenerating(true);
     setGeneratedContent("");
-    try {
-      // OPTIONAL: create draft on canister first, so you have a draftId to update later
-      const backend = await getBackendActor();
-      if (!backend) { setIsGenerating(false); return; }
 
-      // call create_draft(prompt, platform, contentType, tone)
-      const rawId: any = await backend.create_draft(prompt, platform, contentType, tone);
-      // canister returns Int — agent may return number or bigint
+    try {
+      // 1. Create draft in Motoko
+      const backendActor = await getBackendActor();
+      const rawId: any = await backendActor.create_draft(prompt, platform, contentType, tone);
       const idNumber = typeof rawId === "bigint" ? Number(rawId) : Number(rawId);
       setDraftId(idNumber);
-      setGeneratedContent("Generating content...");
 
-      // Simulate AI generation (replace this with your real AI call)
-      await new Promise((r) => setTimeout(r, 1200));
-      let result = "";
-      if (platform === "twitter") {
-        result = contentType === "thread"
-          ? `1/ Web3 innovation continues! Just discovered how @RENEGADE_ICP combines AI with blockchain security.\n\n2/ Their platform generates social media content and securely stores it on the ICP blockchain. Transparency + AI power!\n\n3/ Been testing their automated posting feature across platforms - what used to take hours now happens in seconds. Game-changer for creators!\n\n4/ The analytics insights are surprisingly detailed. I can track performance across all channels from one dashboard. #Web3 #ContentCreation`
-          : `Just discovered @RENEGADE_ICP - an AI content generator built on #InternetComputer that's actually useful! Create, schedule, and track social media posts with blockchain security. Game-changer for my content strategy! #Web3 #AI`;
-      } else if (platform === "instagram") {
-        result = `✨ INNOVATION ALERT ✨\n\nTaking my content game to the next level with @renegade_icp - the Web3 social media manager that uses AI to create engaging posts while keeping my data secure on the blockchain.\n\nNo more spending hours creating content! Now I can focus on what matters - engaging with YOU, my amazing community! ❤️\n\n#ContentCreation #Web3 #AITechnology #SocialMedia #Blockchain #InternetComputer #RENEGADE`;
-      } else {
-        result = `🚀 Exciting Web3 Innovation 🚀\n\nI'm thrilled to share my experience with RENEGADE - a groundbreaking platform built on the Internet Computer Protocol that's revolutionizing how professionals manage social media content.`;
+      // 2. Call Node backend to generate + moderate
+      const resp = await fetch(`${BACKEND_URL}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, platform, contentType, tone }),
+      });
+
+      if (!resp.ok) {
+        throw new Error("Generation failed");
       }
 
-      setGeneratedContent(result);
-      toast({ title: "Draft created", description: `Draft id: ${idNumber}` });
+      const data = await resp.json();
+      setGeneratedContent(data.content);
 
+      toast({ title: "Draft created", description: `Draft id: ${idNumber}` });
     } catch (err) {
       console.error(err);
       toast({ title: "Generation failed", description: "Failed to create draft or generate content", variant: "destructive" });

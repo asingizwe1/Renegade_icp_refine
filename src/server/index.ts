@@ -15,7 +15,7 @@ interface OpenAIResponse {
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: ["http://localhost:5173"] })); // adjust to your frontend origin
+app.use(cors({ origin: ["http://localhost:3000"] })); // adjust to your frontend origin
 
 // Health check
 app.get("/health", (_req, res) => res.json({ ok: true }));
