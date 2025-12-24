@@ -4,6 +4,8 @@ import cors from "cors";
 
 dotenv.config();
 
+console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0, 10));
+
 
 interface OpenAIResponse {
     choices?: Array<{
@@ -36,7 +38,7 @@ app.post("/generate", async (req, res) => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini",
+                model: "gpt-3.5-turbo",
                 messages: [
                     {
                         role: "system",
@@ -50,8 +52,10 @@ app.post("/generate", async (req, res) => {
 
         if (!openaiResp.ok) {
             const errText = await openaiResp.text();
+            console.error("OpenAI error:", errText);
             return res.status(502).json({ error: "OpenAI error", details: errText });
         }
+
 
         const openaiData = (await openaiResp.json()) as OpenAIResponse;
         const rawText = openaiData?.choices?.[0]?.message?.content?.trim();
